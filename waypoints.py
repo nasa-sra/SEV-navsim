@@ -7,6 +7,15 @@ size = pygame.Vector2(20, 20)
 class Waypoint:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 20, 20)
+        self.x = x
+        self.y = y
+        
+    def getX(self):
+        return self.x
+    
+    def getY(self):
+        return self.y
+    
 
 waypoints = [
     Waypoint(100, 100),
@@ -16,6 +25,17 @@ waypoints = [
     Waypoint(500, 500),
     Waypoint(600, 600)
 ]
+
+def resetWaypoints():
+    global waypoints
+    waypoints = [
+        Waypoint(100, 100),
+        Waypoint(200, 200),
+        Waypoint(300, 300),
+        Waypoint(400, 400),
+        Waypoint(500, 500),
+        Waypoint(600, 600)
+    ]
 
 dragged_waypoint = None
 offset_x = 0
@@ -70,7 +90,8 @@ def drawWaypoints(screen):
 def addWayPoint():
     curNumWaypoints = len(waypoints)
     if(curNumWaypoints < 10):
-        waypoints.append(Waypoint(900, 600))
+        waypoints.append(Waypoint(waypoints[curNumWaypoints-1].getX() + 100, 
+                                  waypoints[curNumWaypoints-1].getY()))
         
 def removeWaypoint():
     curNumWaypoints = len(waypoints)
