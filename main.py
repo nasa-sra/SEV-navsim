@@ -22,6 +22,7 @@ def reset_all():
     SEV.vel = pygame.Vector2(0, 0)
     SEV.pos = pygame.Vector2(200, 200)
     SEV.dims = pygame.Vector2(50, 30)
+    waypoints.resetWaypoints()
 
 reset_button = button.Button(button.RED, button.DARK_RED, 900, 50, 150, 50, "RESET", reset_all)
 addWaypoint_button = button.Button(button.BLUE, button.DARK_BLUE, 900, 100, 75, 50, "+WP", waypoints.addWayPoint)
