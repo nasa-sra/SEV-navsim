@@ -1,10 +1,5 @@
 import pygame
-
-RED = (170, 0, 0)
-DARK_RED = (130, 0, 0)
-WHITE = (255, 255, 255)
-BLUE = (0, 0, 200)
-DARK_BLUE = (0, 0, 150)
+import colors
 
 class Button:
     def __init__(self, color, hover_color, x, y, width, height, text, callback):
@@ -22,7 +17,7 @@ class Button:
             pygame.draw.rect(surface, self.color, self.rect)
             
         font = pygame.font.SysFont(None, 36)
-        text_surf = font.render(self.text, True, WHITE)
+        text_surf = font.render(self.text, True, colors.WHITE)
         text_rect = text_surf.get_rect(center=self.rect.center)
         surface.blit(text_surf, text_rect)
         

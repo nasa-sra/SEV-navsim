@@ -1,6 +1,5 @@
 import pygame
-
-RED = (170, 0, 0)
+import colors
 
 size = pygame.Vector2(20, 20)
 
@@ -79,7 +78,7 @@ def drawWaypoints(screen):
         if prev is not None:
             pygame.draw.line(
                 screen,
-                RED,
+                colors.RED,
                 prev.center,
                 waypoint.rect.center,
                 3
