@@ -19,7 +19,6 @@ SEV = vehicle.Vehicle()
 def reset_all():
     SEV.heading = 0
     SEV.accel = pygame.Vector2(0, 0)
-    SEV.friction = pygame.Vector2(0, 0)
     SEV.vel = pygame.Vector2(0, 0)
     SEV.pos = pygame.Vector2(200, 200)
     SEV.dims = pygame.Vector2(50, 30)
@@ -43,6 +42,16 @@ while running:
     )
     vehicle_surface.fill("white")
 
+    pygame.draw.polygon(
+        vehicle_surface,
+        "red",
+        [
+            (SEV.dims.x, SEV.dims.y / 2),
+            (SEV.dims.x - 12, 5),
+            (SEV.dims.x - 12, SEV.dims.y - 5)
+        ]
+    )
+
     rotated_vehicle = pygame.transform.rotate(
         vehicle_surface,
         -SEV.heading
@@ -60,20 +69,23 @@ while running:
     steering = 0
 
     if keys[pygame.K_w]:
-        throttle = 300
+        throttle = 250
 
     elif keys[pygame.K_s]:
-        throttle = -300
+        throttle = -250
 
     if keys[pygame.K_a]:
-        steering = -120
+        steering = -80
 
     elif keys[pygame.K_d]:
-        steering = 120
+        steering = 80
     
     SEV.speed += throttle * dt
-    SEV.speed *= 0.98
-    
+
+    drag = 2.5
+    SEV.speed -= SEV.speed * drag * dt
+
+
     SEV.heading += steering * dt
     heading_rad = math.radians(SEV.heading)
 
