@@ -73,7 +73,6 @@ def addWayPoint():
         waypoints.append(Waypoint(900, 600))
         
 def removeWaypoint():
-    global waypoints
     curNumWaypoints = len(waypoints)
     if(curNumWaypoints > 2):
-        waypoints = waypoints[:-1]
+        waypoints.pop()
