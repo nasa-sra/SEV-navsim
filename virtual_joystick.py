@@ -8,11 +8,11 @@ class VirtualJoystick:
         self.knobX = x
         self.knobY = y
     
-    def getX(self): 
-        return self.outerX
+    def getKnobX(self): 
+        return self.knobX
     
-    def getY(self): 
-        return self.outerY
+    def getKnobY(self): 
+        return self.knobY
         
     def draw(self, screen):
         pygame.draw.circle(screen, colors.WHITE, (self.outerX, self.outerY), 80, 4)

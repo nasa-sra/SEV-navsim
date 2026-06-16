@@ -9,17 +9,24 @@ import colors
 pygame.init()
 
 pygame.joystick.init()
+useJoystick = pygame.joystick.get_count() > 0
 
-if pygame.joystick.get_count() == 0:
-    print("No controller detected. Please connect one and restart.")
+if useJoystick:
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
 
-joystick = pygame.joystick.Joystick(0)
-joystick.init()
+else:
+    print("No controller detected. Use WASD keys")
+
+
 
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 running = True
 dt = 0
+deadband = 0.1
+xValue = 0
+yValue = 0
 
 SEV = vehicle.Vehicle()
 
@@ -40,10 +47,10 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.JOYAXISMOTION:
-            xShift = joystick.get_axis(0) * 25
-            yShift = joystick.get_axis(1) * 25
-            vJoystick.moveKnob(xShift, yShift)
+        if useJoystick and event.type == pygame.JOYAXISMOTION:
+            xValue = joystick.get_axis(0)
+            yValue = joystick.get_axis(1)
+            vJoystick.moveKnob(xValue * 25, yValue * 25)
         reset_button.handle_event(event)
         addWaypoint_button.handle_event(event)
         removeWaypoint_button.handle_event(event)
@@ -62,6 +69,7 @@ while running:
     )
     vehicle_surface.fill("white")
 
+    # nose on SEV rectangle
     pygame.draw.polygon(
         vehicle_surface,
         "red",
@@ -93,12 +101,20 @@ while running:
 
     elif keys[pygame.K_s]:
         throttle = -250
+        
+    elif useJoystick:
+        yValue = 0 if abs(yValue) < deadband else yValue 
+        throttle = -yValue * 250
 
     if keys[pygame.K_a]:
         steering = -80
 
     elif keys[pygame.K_d]:
         steering = 80
+        
+    elif useJoystick:
+        xValue = 0 if abs(xValue) < deadband else xValue 
+        steering = xValue * 80
     
     SEV.speed += throttle * dt
 
