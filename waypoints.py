@@ -66,3 +66,14 @@ def drawWaypoints(screen):
             )
 
         prev = waypoint.rect
+        
+def addWayPoint():
+    curNumWaypoints = len(waypoints)
+    if(curNumWaypoints < 10):
+        waypoints.append(Waypoint(900, 600))
+        
+def removeWaypoint():
+    global waypoints
+    curNumWaypoints = len(waypoints)
+    if(curNumWaypoints > 2):
+        waypoints = waypoints[:-1]

@@ -3,6 +3,8 @@ import pygame
 RED = (170, 0, 0)
 DARK_RED = (130, 0, 0)
 WHITE = (255, 255, 255)
+BLUE = (0, 0, 200)
+DARK_BLUE = (0, 0, 150)
 
 class Button:
     def __init__(self, color, hover_color, x, y, width, height, text, callback):

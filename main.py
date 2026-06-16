@@ -24,16 +24,22 @@ def reset_all():
     SEV.dims = pygame.Vector2(50, 30)
 
 reset_button = button.Button(button.RED, button.DARK_RED, 900, 50, 150, 50, "RESET", reset_all)
+addWaypoint_button = button.Button(button.BLUE, button.DARK_BLUE, 900, 100, 75, 50, "+WP", waypoints.addWayPoint)
+removeWaypoint_button = button.Button(button.BLUE, button.DARK_BLUE, 975, 100, 75, 50, "-WP", waypoints.removeWaypoint)
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         reset_button.handle_event(event)
+        addWaypoint_button.handle_event(event)
+        removeWaypoint_button.handle_event(event)
         waypoints.handle_event(event)
         
     screen.fill("black")
     reset_button.draw(screen)
+    addWaypoint_button.draw(screen)
+    removeWaypoint_button.draw(screen)
     waypoints.drawWaypoints(screen)
     
     vehicle_surface = pygame.Surface(
