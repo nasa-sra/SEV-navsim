@@ -3,16 +3,23 @@ import math
 import button
 import waypoints
 import vehicle
+import virtual_joystick
+import colors
 
 pygame.init()
+
+pygame.joystick.init()
+
+if pygame.joystick.get_count() == 0:
+    print("No controller detected. Please connect one and restart.")
+
+joystick = pygame.joystick.Joystick(0)
+joystick.init()
+
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 running = True
 dt = 0
-
-# to be implemented later:
-# max_waypoints = 10
-# min_waypoints = 3
 
 SEV = vehicle.Vehicle()
 
@@ -24,14 +31,19 @@ def reset_all():
     SEV.dims = pygame.Vector2(50, 30)
     waypoints.resetWaypoints()
 
-reset_button = button.Button(button.RED, button.DARK_RED, 900, 50, 150, 50, "RESET", reset_all)
-addWaypoint_button = button.Button(button.BLUE, button.DARK_BLUE, 900, 100, 75, 50, "+WP", waypoints.addWayPoint)
-removeWaypoint_button = button.Button(button.BLUE, button.DARK_BLUE, 975, 100, 75, 50, "-WP", waypoints.removeWaypoint)
+reset_button = button.Button(colors.RED, colors.DARK_RED, 900, 50, 150, 50, "RESET", reset_all)
+addWaypoint_button = button.Button(colors.BLUE, colors.DARK_BLUE, 900, 100, 75, 50, "+WP", waypoints.addWayPoint)
+removeWaypoint_button = button.Button(colors.BLUE, colors.DARK_BLUE, 975, 100, 75, 50, "-WP", waypoints.removeWaypoint)
+vJoystick = virtual_joystick.VirtualJoystick(1000, 500)
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.JOYAXISMOTION:
+            xShift = joystick.get_axis(0) * 25
+            yShift = joystick.get_axis(1) * 25
+            vJoystick.moveKnob(xShift, yShift)
         reset_button.handle_event(event)
         addWaypoint_button.handle_event(event)
         removeWaypoint_button.handle_event(event)
@@ -42,6 +54,7 @@ while running:
     addWaypoint_button.draw(screen)
     removeWaypoint_button.draw(screen)
     waypoints.drawWaypoints(screen)
+    vJoystick.draw(screen)
     
     vehicle_surface = pygame.Surface(
         (SEV.dims.x, SEV.dims.y),
@@ -89,7 +102,7 @@ while running:
     
     SEV.speed += throttle * dt
 
-    drag = 2.5
+    drag = 2.0
     SEV.speed -= SEV.speed * drag * dt
 
 
