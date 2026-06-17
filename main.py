@@ -5,6 +5,7 @@ import waypoints
 import vehicle
 import virtual_joystick
 import colors
+import stanley_controller
 
 pygame.init()
 
@@ -30,7 +31,7 @@ yValue = 0
 
 SEV = vehicle.Vehicle()
 
-def reset_all():
+def reset_sim():
     SEV.heading = 0
     SEV.accel = pygame.Vector2(0, 0)
     SEV.vel = pygame.Vector2(0, 0)
@@ -38,10 +39,12 @@ def reset_all():
     SEV.dims = pygame.Vector2(50, 30)
     waypoints.resetWaypoints()
 
-reset_button = button.Button(colors.RED, colors.DARK_RED, 900, 50, 150, 50, "RESET", reset_all)
+reset_button = button.Button(colors.RED, colors.DARK_RED, 900, 50, 150, 50, "RESET", reset_sim)
 addWaypoint_button = button.Button(colors.BLUE, colors.DARK_BLUE, 900, 100, 75, 50, "+WP", waypoints.addWayPoint)
 removeWaypoint_button = button.Button(colors.BLUE, colors.DARK_BLUE, 975, 100, 75, 50, "-WP", waypoints.removeWaypoint)
-vJoystick = virtual_joystick.VirtualJoystick(1000, 500)
+vJoystick = virtual_joystick.VirtualJoystick(900, 500)
+stanleyJoystick = virtual_joystick.VirtualJoystick(1100, 500)
+stanleyController = stanley_controller.StanleyController()
 
 while running:
     for event in pygame.event.get():
@@ -60,8 +63,9 @@ while running:
     reset_button.draw(screen)
     addWaypoint_button.draw(screen)
     removeWaypoint_button.draw(screen)
-    waypoints.drawWaypoints(screen)
+    waypoints.draw(screen)
     vJoystick.draw(screen)
+    stanleyJoystick.draw(screen)
     
     vehicle_surface = pygame.Surface(
         (SEV.dims.x, SEV.dims.y),
@@ -131,6 +135,14 @@ while running:
     SEV.pos.x += forward_x * SEV.speed * dt
     SEV.pos.y += forward_y * SEV.speed * dt
     
+    wps = waypoints.getWaypoints()
+    closestPoint = pygame.Vector2(10000, 10000)
+    for i in range(len(wps)-1):
+        curPoint = stanleyController.closest_point_on_segment(SEV.pos, wps[i].getCenter(), wps[i+1].getCenter())
+        if(closestPoint.distance_to(SEV.pos) > curPoint.distance_to(SEV.pos)) : closestPoint = curPoint
+        
+    pygame.draw.line(screen, colors.WHITE, closestPoint, SEV.pos, 1)
+        
     pygame.display.flip()
 
     # 60 FPS, dt is delta time in seconds since last frame (need to standardize across program)
