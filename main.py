@@ -6,6 +6,7 @@ import vehicle
 import virtual_joystick
 import colors
 import stanley_controller
+import display_text
 
 pygame.init()
 
@@ -45,6 +46,8 @@ removeWaypoint_button = button.Button(colors.BLUE, colors.DARK_BLUE, 975, 100, 7
 vJoystick = virtual_joystick.VirtualJoystick(900, 500)
 stanleyJoystick = virtual_joystick.VirtualJoystick(1100, 500)
 stanleyController = stanley_controller.StanleyController()
+steeringDisplay = display_text.Text("", 700, 150)
+cteDisplay = display_text.Text("", 700, 250)
 
 while running:
     for event in pygame.event.get():
@@ -66,6 +69,8 @@ while running:
     waypoints.draw(screen)
     vJoystick.draw(screen)
     stanleyJoystick.draw(screen)
+    steeringDisplay.display(screen)
+    cteDisplay.display(screen)
     
     vehicle_surface = pygame.Surface(
         (SEV.dims.x, SEV.dims.y),
@@ -136,10 +141,19 @@ while running:
     SEV.pos.y += forward_y * SEV.speed * dt
     
     wps = waypoints.getWaypoints()
+    wpIndex = -1
     closestPoint = pygame.Vector2(10000, 10000)
     for i in range(len(wps)-1):
         curPoint = stanleyController.closest_point_on_segment(SEV.pos, wps[i].getCenter(), wps[i+1].getCenter())
-        if(closestPoint.distance_to(SEV.pos) > curPoint.distance_to(SEV.pos)) : closestPoint = curPoint
+        if(closestPoint.distance_to(SEV.pos) > curPoint.distance_to(SEV.pos)) : 
+            closestPoint = curPoint
+            wpIndex = i
+        
+    desired_steering_angle = round(stanleyController.steering(SEV.pos, SEV.heading, SEV.speed, wps[i], wps[i+1]), 2)
+    cte = round(stanleyController.compute_cte(SEV.pos, wps[i].getCenter(), wps[i+1].getCenter()), 2)
+    steeringDisplay.updateText("desired steering: " + str(desired_steering_angle))
+    cteDisplay.updateText("current CTE: " + str(cte))
+    
         
     pygame.draw.line(screen, colors.WHITE, closestPoint, SEV.pos, 1)
         
