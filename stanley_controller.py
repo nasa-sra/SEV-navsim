@@ -56,6 +56,3 @@ class StanleyController:
         steering_angle = theta_err + math.degrees(math.atan(self.k_gain * cte / v))
 
         return steering_angle
-        
-        
-        
