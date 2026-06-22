@@ -1,165 +1,87 @@
 import pygame
-import math
+
 import button
-import waypoints
-import vehicle
-import virtual_joystick
 import colors
-import stanley_controller
-import display_text
+
+from sim_screen import SimScreen
+from gui_screen import GuiScreen
 
 pygame.init()
 
-pygame.joystick.init()
-useJoystick = pygame.joystick.get_count() > 0
-
-if useJoystick:
-    joystick = pygame.joystick.Joystick(0)
-    joystick.init()
-
-else:
-    print("No controller detected. Use WASD keys")
-
-
-
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
+
+sim_screen = SimScreen(screen)
+gui_screen = GuiScreen(screen)
+
+current_screen = sim_screen
+
+def show_sim():
+    global current_screen
+    current_screen = sim_screen
+
+def show_gui():
+    global current_screen
+    current_screen = gui_screen
+
+left_button = button.Button(
+    colors.BLUE,
+    colors.DARK_BLUE,
+    10,
+    10,
+    50,
+    40,
+    "<",
+    show_sim
+)
+
+right_button = button.Button(
+    colors.BLUE,
+    colors.DARK_BLUE,
+    70,
+    10,
+    50,
+    40,
+    ">",
+    show_gui
+)
+
+nasa_logo = pygame.image.load(
+    "nasa_logo.png"
+).convert_alpha()
+
+nasa_logo = pygame.transform.smoothscale(
+    nasa_logo,
+    (nasa_logo.get_width() * .1, nasa_logo.get_height() * .1)
+)
+
 running = True
-dt = 0
-deadband = 0.1
-xValue = 0
-yValue = 0
-
-SEV = vehicle.Vehicle()
-
-def reset_sim():
-    SEV.heading = 0
-    SEV.accel = pygame.Vector2(0, 0)
-    SEV.vel = pygame.Vector2(0, 0)
-    SEV.pos = pygame.Vector2(200, 200)
-    SEV.dims = pygame.Vector2(50, 30)
-    waypoints.resetWaypoints()
-
-reset_button = button.Button(colors.RED, colors.DARK_RED, 900, 50, 150, 50, "RESET", reset_sim)
-addWaypoint_button = button.Button(colors.BLUE, colors.DARK_BLUE, 900, 100, 75, 50, "+WP", waypoints.addWayPoint)
-removeWaypoint_button = button.Button(colors.BLUE, colors.DARK_BLUE, 975, 100, 75, 50, "-WP", waypoints.removeWaypoint)
-vJoystick = virtual_joystick.VirtualJoystick(900, 500)
-stanleyJoystick = virtual_joystick.VirtualJoystick(1100, 500)
-stanleyController = stanley_controller.StanleyController()
-steeringDisplay = display_text.Text("", 700, 150)
-cteDisplay = display_text.Text("", 700, 250)
 
 while running:
+
+    dt = clock.tick(60) / 1000
+
     for event in pygame.event.get():
+
         if event.type == pygame.QUIT:
             running = False
-        if useJoystick and event.type == pygame.JOYAXISMOTION:
-            xValue = joystick.get_axis(0)
-            yValue = joystick.get_axis(1)
-            vJoystick.moveKnob(xValue * 25, yValue * 25)
-        reset_button.handle_event(event)
-        addWaypoint_button.handle_event(event)
-        removeWaypoint_button.handle_event(event)
-        waypoints.handle_event(event)
-        
-    screen.fill("black")
-    reset_button.draw(screen)
-    addWaypoint_button.draw(screen)
-    removeWaypoint_button.draw(screen)
-    waypoints.draw(screen)
-    vJoystick.draw(screen)
-    stanleyJoystick.draw(screen)
-    steeringDisplay.display(screen)
-    cteDisplay.display(screen)
-    
-    vehicle_surface = pygame.Surface(
-        (SEV.dims.x, SEV.dims.y),
-        pygame.SRCALPHA
-    )
-    vehicle_surface.fill("white")
 
-    # nose on SEV rectangle
-    pygame.draw.polygon(
-        vehicle_surface,
-        "red",
-        [
-            (SEV.dims.x, SEV.dims.y / 2),
-            (SEV.dims.x - 12, 5),
-            (SEV.dims.x - 12, SEV.dims.y - 5)
-        ]
+        left_button.handle_event(event)
+        right_button.handle_event(event)
+
+        current_screen.handle_event(event)
+
+    current_screen.update(dt)
+    current_screen.draw()
+    
+    screen.blit(
+        nasa_logo,
+        (1125, 25)   # top-right corner
     )
 
-    rotated_vehicle = pygame.transform.rotate(
-        vehicle_surface,
-        -SEV.heading
-    )
+    left_button.draw(screen)
+    right_button.draw(screen)
 
-    rect = rotated_vehicle.get_rect(
-        center=SEV.pos
-    )
-
-    screen.blit(rotated_vehicle, rect)
-
-    keys = pygame.key.get_pressed()
-    
-    throttle = 0
-    steering = 0
-
-    if keys[pygame.K_w]:
-        throttle = 250
-
-    elif keys[pygame.K_s]:
-        throttle = -250
-        
-    elif useJoystick:
-        yValue = 0 if abs(yValue) < deadband else yValue 
-        throttle = -yValue * 250
-
-    if keys[pygame.K_a]:
-        steering = -80
-
-    elif keys[pygame.K_d]:
-        steering = 80
-        
-    elif useJoystick:
-        xValue = 0 if abs(xValue) < deadband else xValue 
-        steering = xValue * 80
-    
-    SEV.speed += throttle * dt
-
-    drag = 2.0
-    SEV.speed -= SEV.speed * drag * dt
-
-
-    SEV.heading += steering * dt
-    heading_rad = math.radians(SEV.heading)
-
-    forward_x = math.cos(heading_rad)
-    forward_y = math.sin(heading_rad)
-    
-    SEV.pos.x += forward_x * SEV.speed * dt
-    SEV.pos.y += forward_y * SEV.speed * dt
-    
-    wps = waypoints.getWaypoints()
-    wpIndex = -1
-    closestPoint = pygame.Vector2(10000, 10000)
-    for i in range(len(wps)-1):
-        curPoint = stanleyController.closest_point_on_segment(SEV.pos, wps[i].getCenter(), wps[i+1].getCenter())
-        if(closestPoint.distance_to(SEV.pos) > curPoint.distance_to(SEV.pos)) : 
-            closestPoint = curPoint
-            wpIndex = i
-        
-    desired_steering_angle = round(stanleyController.steering(SEV.pos, SEV.heading, SEV.speed, wps[i], wps[i+1]), 2)
-    cte = round(stanleyController.compute_cte(SEV.pos, wps[i].getCenter(), wps[i+1].getCenter()), 2)
-    steeringDisplay.updateText("desired steering: " + str(desired_steering_angle))
-    cteDisplay.updateText("current CTE: " + str(cte))
-    
-        
-    pygame.draw.line(screen, colors.WHITE, closestPoint, SEV.pos, 1)
-        
     pygame.display.flip()
-
-    # 60 FPS, dt is delta time in seconds since last frame (need to standardize across program)
-    dt = clock.tick(60) / 1000
 
 pygame.quit()
