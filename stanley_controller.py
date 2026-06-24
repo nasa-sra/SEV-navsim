@@ -3,7 +3,7 @@ import math
 
 class StanleyController:
 
-    def __init__(self, k_gain=0.5):
+    def __init__(self, k_gain=1.75):
         self.k_gain = k_gain
 
     def closest_point_on_segment(self, SEVpos, wp1_vec, wp2_vec):
@@ -47,7 +47,7 @@ class StanleyController:
         p = pygame.Vector2(SEVpos.x, SEVpos.y)
 
         # Compute errors
-        cte = self.compute_cte(p, a, b)
+        cte = -self.compute_cte(p, a, b)
         theta_err = self.heading_error(SEV_heading, a, b)
 
         # Avoid division by zero
