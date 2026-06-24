@@ -384,7 +384,7 @@ class SimScreen:
             )
             
             self.headingDisplay.updateText(
-                f"current heading: {round(self.SEV.heading, 2)}"
+                f"current heading: {round(self.SEV.heading % 360, 2)}"
             )
 
     def draw(self):

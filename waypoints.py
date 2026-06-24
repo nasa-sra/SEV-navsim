@@ -96,7 +96,7 @@ def draw(screen):
         
 def addWayPoint():
     curNumWaypoints = len(waypoints)
-    if(curNumWaypoints < 10):
+    if(curNumWaypoints < 15):
         waypoints.append(Waypoint(waypoints[curNumWaypoints-1].getX() + 100, 
                                   waypoints[curNumWaypoints-1].getY()))
         
