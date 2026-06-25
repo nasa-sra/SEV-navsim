@@ -46,6 +46,9 @@ class GuiScreen:
         angle = math.pi/2 - abs((mag / 100) * math.pi/2)
 
         pygame.draw.arc(self.screen, colors.RED, (100, 150, 300, 300), angle, math.pi - angle, width=3)
+        
+        y = abs(self.slider.getValue()) + 300
+        pygame.draw.line(self.screen, colors.BLUE, (1000, y), (1000, 600 - y), width = 3)
 
         self.screen.blit(
             self.joystick_image,
