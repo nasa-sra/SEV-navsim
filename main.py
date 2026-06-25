@@ -1,5 +1,5 @@
 import pygame
-
+import pygame_widgets
 import button
 import colors
 
@@ -61,8 +61,8 @@ while running:
 
     dt = clock.tick(60) / 1000
 
-    for event in pygame.event.get():
-
+    events = pygame.event.get()
+    for event in events:
         if event.type == pygame.QUIT:
             running = False
 
@@ -73,6 +73,11 @@ while running:
 
     current_screen.update(dt)
     current_screen.draw()
+    
+    if(isinstance(current_screen, GuiScreen)): 
+        current_screen.setText()
+        pygame_widgets.update(events)
+        pygame.display.update()
     
     screen.blit(
         nasa_logo,
