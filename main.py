@@ -116,7 +116,7 @@ right_button = button.Button(
 
 # NASA LOGO
  
-nasa_logo = pygame.image.load("nasa_logo.png").convert_alpha()
+nasa_logo = pygame.image.load("images/nasa_logo.png").convert_alpha()
 
 nasa_logo = pygame.transform.smoothscale(
     nasa_logo,

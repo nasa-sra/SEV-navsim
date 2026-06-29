@@ -13,7 +13,7 @@ class GuiScreen:
         self.output = TextBox(screen, 250, 650, 75, 50, fontSize=20)
         self.output.disable()
 
-        self.joystick_image = pygame.image.load("logitech.jpg").convert_alpha()
+        self.joystick_image = pygame.image.load("images/logitech.jpg").convert_alpha()
 
         width = self.joystick_image.get_width()
         height = self.joystick_image.get_height()
