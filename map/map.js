@@ -61,7 +61,7 @@ async function drawRoute() {
         routeLine = L.polyline(latlngs, { color: "blue", weight: 4 }).addTo(map);
         map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
 
-        // send the route itself to Python too, in case the GUI wants it
+        // send the route itself to Python to display on the GUI
         socket.send(JSON.stringify({
             type: "route",
             distance_m: route.distance,
@@ -99,3 +99,24 @@ map.on('click', function (e) {
         sendWaypoint("start", e.latlng);
     }
 });
+
+
+/*
+
+The below is an example of valid GeoJSON data:
+
+{
+  "type": "Feature",
+  "properties": {},
+  "geometry": {
+    "type": "LineString",
+    "coordinates": [
+      [-95.08417, 29.56018],
+      [-95.08413, 29.56025],
+      [-95.08411, 29.56030],
+      [-95.08433, 29.56038]
+    ]
+  }
+}
+
+*/

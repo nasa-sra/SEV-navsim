@@ -157,8 +157,10 @@ while running:
     current_screen.draw()
     if isinstance(current_screen, GuiScreen):
         current_screen.setText()
-        if end_waypoint:
+        if start_waypoint and end_waypoint:
             current_screen.set_waypoints(start_waypoint, end_waypoint)
+            current_screen.set_route(latest_route)
+            
         pygame_widgets.update(events)
     screen.blit(nasa_logo, (1125, 25))
     left_button.draw(screen)
