@@ -64,13 +64,13 @@ class GuiScreen:
             lat, lon = self.start_waypoint
             text = f"Start -> Lat: {lat:.6f}   Lon: {lon:.6f}"
             surface = self.coord_font.render(text, True, (0, 0, 0))
-            self.screen.blit(surface, (75, 170))
+            self.screen.blit(surface, (50, 170))
             
         if self.end_waypoint:
             lat, lon = self.end_waypoint
             text = f"End -> Lat: {lat:.6f}   Lon: {lon:.6f}"
             surface = self.coord_font.render(text, True, (0, 0, 0))
-            self.screen.blit(surface, (75, 200))
+            self.screen.blit(surface, (50, 200))
             
         if self.route:
             instructions = self.generate_instructions()
@@ -79,7 +79,7 @@ class GuiScreen:
             index = 1
             for inst in instructions:
                 surface = self.coord_font.render(f"{index}. {inst}", True, (0, 0, 0))
-                self.screen.blit(surface, (75, height))
+                self.screen.blit(surface, (50, height))
                 height += 30
                 index += 1
             
@@ -120,19 +120,36 @@ class GuiScreen:
     def generate_instructions(self):
         instructions = []
         prev_bearing = None
+        last_turn = None
+        accumulated_distance = 0
 
         for i in range(len(self.route)-1):
             a, b = self.route[i], self.route[i+1]
             dist = self.haversine(a, b)
             brng = self.bearing(a, b)
+            accumulated_distance += dist
 
             if prev_bearing is None:
-                instructions.append(f"Start and continue for {int(dist)} meters")
+                instructions.append(f"Start and continue for {int(accumulated_distance)} meters")
+                last_turn = "Start"
+                accumulated_distance = 0
+
             else:
                 turn = self.turn_direction(prev_bearing, brng)
-                instructions.append(f"{turn}, continue for {int(dist)} meters")
+
+                # Skip straight instructions and merge distance into previous inst.
+                if turn == "Continue straight":
+                    instructions[-1] = f"{last_turn}, continue for {int(accumulated_distance)} meters"
+                    prev_bearing = brng
+                    continue
+
+                instructions.append(f"{turn}, continue for {int(accumulated_distance)} meters")
+                last_turn = turn
+                accumulated_distance = 0
 
             prev_bearing = brng
 
         instructions.append("You have reached your destination")
         return instructions
+
+
