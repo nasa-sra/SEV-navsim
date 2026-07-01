@@ -27,6 +27,7 @@ class GuiScreen:
         self.start_waypoint = None
         self.end_waypoint = None
         self.route = None
+        self.steps = None
         self.coord_font = pygame.font.SysFont(None, 28)
 
     def handle_event(self, event):
@@ -38,13 +39,13 @@ class GuiScreen:
     def setText(self):
         self.output.setText(str(self.slider.getValue()) + "%")
 
-    # NEW: called from main.py each frame with the latest (lat, lon)
     def set_waypoints(self, start_waypoint, end_waypoint):
         self.start_waypoint = start_waypoint
         self.end_waypoint = end_waypoint
-        
+
     def set_route(self, route):
-        self.route = route['geometry']
+        self.route = route.get('geometry')
+        self.steps = route.get('steps')
 
     def draw(self):
 
@@ -59,30 +60,26 @@ class GuiScreen:
         y = 1.5 * abs(self.slider.getValue()) + 360
         pygame.draw.line(self.screen, colors.BLUE, (1000, y), (1000, 720 - y), width=3)
 
-
         if self.start_waypoint:
             lat, lon = self.start_waypoint
             text = f"Start -> Lat: {lat:.6f}   Lon: {lon:.6f}"
             surface = self.coord_font.render(text, True, (0, 0, 0))
             self.screen.blit(surface, (50, 170))
-            
+
         if self.end_waypoint:
             lat, lon = self.end_waypoint
             text = f"End -> Lat: {lat:.6f}   Lon: {lon:.6f}"
             surface = self.coord_font.render(text, True, (0, 0, 0))
             self.screen.blit(surface, (50, 200))
-            
-        if self.route:
+
+        if self.route or self.steps:
             instructions = self.generate_instructions()
-            text = ""
             height = 300
-            index = 1
-            for inst in instructions:
+            for index, inst in enumerate(instructions, start=1):
                 surface = self.coord_font.render(f"{index}. {inst}", True, (0, 0, 0))
                 self.screen.blit(surface, (50, height))
                 height += 30
-                index += 1
-            
+
 
     def haversine(self, a, b):
         earth_radius = 6371000  # meters
@@ -105,45 +102,83 @@ class GuiScreen:
     def turn_direction(self, prev, curr):
         diff = (curr - prev + 360) % 360
 
-        if diff < 15 or diff > 345:
+        if diff < 20 or diff > 340:
             return "Continue straight"
         if diff < 45:
             return "Slight right"
         if diff < 135:
             return "Turn right"
-        if diff < 225:
+        if diff < 180:
+            return "Sharp right"
+        if diff <= 200:
             return "U-turn"
+        if diff < 225:
+            return "Sharp left"
         if diff < 315:
             return "Turn left"
         return "Slight left"
 
     def generate_instructions(self):
+        if self.steps:
+            return self._instructions_from_osrm_steps()
+        return self._instructions_from_geometry()
+
+    def _instructions_from_osrm_steps(self):
+        instructions = []
+        for step in self.steps:
+            maneuver = step.get('instruction', '')
+            modifier = step.get('modifier')
+            name = step.get('name') or ""
+            dist = int(step.get('distance_m', 0))
+
+            if maneuver == 'depart':
+                text = "Start"
+                if name:
+                    text += f" on {name}"
+                text += f" and continue for {dist} meters"
+            elif maneuver == 'arrive':
+                text = "You have reached your destination"
+            else:
+                label = (modifier or maneuver).replace('_', ' ').capitalize()
+                text = f"{label}"
+                if name:
+                    text += f" onto {name}"
+                text += f", continue for {dist} meters"
+
+            instructions.append(text)
+
+        return instructions
+
+    def _instructions_from_geometry(self):
         instructions = []
         prev_bearing = None
         last_turn = None
+        instruction_distance = 0
         accumulated_distance = 0
 
-        for i in range(len(self.route)-1):
-            a, b = self.route[i], self.route[i+1]
+        for i in range(len(self.route) - 1):
+            a, b = self.route[i], self.route[i + 1]
             dist = self.haversine(a, b)
             brng = self.bearing(a, b)
             accumulated_distance += dist
 
             if prev_bearing is None:
-                instructions.append(f"Start and continue for {int(accumulated_distance)} meters")
+                instruction_distance = accumulated_distance
+                instructions.append(f"Start and continue for {int(instruction_distance)} meters")
                 last_turn = "Start"
                 accumulated_distance = 0
-
             else:
                 turn = self.turn_direction(prev_bearing, brng)
 
-                # Skip straight instructions and merge distance into previous inst.
                 if turn == "Continue straight":
-                    instructions[-1] = f"{last_turn}, continue for {int(accumulated_distance)} meters"
+                    instruction_distance += accumulated_distance
+                    instructions[-1] = f"{last_turn}, continue for {int(instruction_distance)} meters"
+                    accumulated_distance = 0
                     prev_bearing = brng
                     continue
 
-                instructions.append(f"{turn}, continue for {int(accumulated_distance)} meters")
+                instruction_distance = accumulated_distance
+                instructions.append(f"{turn}, continue for {int(instruction_distance)} meters")
                 last_turn = turn
                 accumulated_distance = 0
 
@@ -151,5 +186,3 @@ class GuiScreen:
 
         instructions.append("You have reached your destination")
         return instructions
-
-

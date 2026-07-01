@@ -33,7 +33,7 @@ function sendWaypoint(label, latlng) {
 async function fetchRoute(start, end) {
     const url = `${OSRM_BASE_URL}/route/v1/${OSRM_PROFILE}/` +
         `${start.lng},${start.lat};${end.lng},${end.lat}` +
-        `?overview=full&geometries=geojson`;
+        `?overview=full&geometries=geojson&steps=true`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -55,18 +55,26 @@ async function drawRoute() {
     try {
         const route = await fetchRoute(startMarker.getLatLng(), endMarker.getLatLng());
 
-        // GeoJSON coords are [lon, lat] — Leaflet wants [lat, lon]
         const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
 
         routeLine = L.polyline(latlngs, { color: "blue", weight: 4 }).addTo(map);
         map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
 
-        // send the route itself to Python to display on the GUI
+        // Pull OSRM's own turn-by-turn steps out of the first (only) leg
+        const steps = route.legs[0].steps.map(step => ({
+            instruction: step.maneuver.type,
+            modifier: step.maneuver.modifier,
+            name: step.name,
+            distance_m: step.distance,
+            duration_s: step.duration
+        }));
+
         socket.send(JSON.stringify({
             type: "route",
             distance_m: route.distance,
             duration_s: route.duration,
-            geometry: route.geometry.coordinates
+            geometry: route.geometry.coordinates,
+            steps: steps
         }));
 
     } catch (err) {
