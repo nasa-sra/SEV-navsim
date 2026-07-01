@@ -44,8 +44,9 @@ class GuiScreen:
         self.end_waypoint = end_waypoint
 
     def set_route(self, route):
-        self.route = route.get('geometry')
-        self.steps = route.get('steps')
+        if route:
+            self.route = route.get('geometry')
+            self.steps = route.get('steps')
 
     def draw(self):
 
@@ -55,10 +56,39 @@ class GuiScreen:
         mag = self.slider.getValue()
         angle = math.pi / 2 - abs((mag / 100) * math.pi / 2)
 
-        pygame.draw.arc(self.screen, colors.RED, (525, 40, 300, 300), angle, math.pi - angle, width=3)
+        pygame.draw.arc(self.screen, colors.RED, (515, 40, 300, 300), angle, math.pi - angle, width=3)
 
-        y = 1.5 * abs(self.slider.getValue()) + 360
-        pygame.draw.line(self.screen, colors.BLUE, (1000, y), (1000, 720 - y), width=3)
+        arc_center = (515 + 150, 40 + 150)
+        arc_radius = 150
+
+        def point_on_arc(theta):
+            return (
+                arc_center[0] + arc_radius * math.cos(theta),
+                arc_center[1] - arc_radius * math.sin(theta)
+            )
+
+        if mag != 0:
+            eps = 0.05  # small step back along the arc, toward its start
+            if mag > 0:
+                tip = point_on_arc(angle)
+                trailing = point_on_arc(angle + eps)
+            else:
+                tip = point_on_arc(math.pi - angle)
+                trailing = point_on_arc(math.pi - angle - eps)
+
+            dx, dy = tip[0] - trailing[0], tip[1] - trailing[1]
+            direction_deg = math.degrees(math.atan2(dx, -dy))
+            self.draw_arrowhead(tip, direction_deg, colors.RED)
+
+        throttle_origin = (950, 360)
+        throttle_length = 3 * abs(mag)
+        throttle_dir_deg = 0 if mag >= 0 else 180
+        throttle_tip = (
+            throttle_origin[0],
+            throttle_origin[1] - throttle_length if mag >= 0 else throttle_origin[1] + throttle_length
+        )
+        pygame.draw.line(self.screen, colors.BLUE, throttle_origin, throttle_tip, width=3)
+        self.draw_arrowhead(throttle_tip, throttle_dir_deg, colors.BLUE)
 
         if self.start_waypoint:
             lat, lon = self.start_waypoint
@@ -80,6 +110,18 @@ class GuiScreen:
                 self.screen.blit(surface, (50, height))
                 height += 30
 
+    def draw_arrowhead(self, tip, direction_deg, color, size=14):
+        rad = math.radians(direction_deg)
+        dx, dy = math.sin(rad), -math.cos(rad)
+        px, py = -dy, dx
+
+        base_x = tip[0] - dx * size
+        base_y = tip[1] - dy * size
+
+        left = (base_x + px * size * 0.5, base_y + py * size * 0.5)
+        right = (base_x - px * size * 0.5, base_y - py * size * 0.5)
+
+        pygame.draw.polygon(self.screen, color, [tip, left, right])
 
     def haversine(self, a, b):
         earth_radius = 6371000  # meters

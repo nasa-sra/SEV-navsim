@@ -36,7 +36,7 @@ class SimScreen:
         self.reset_button = button.Button(
             colors.RED,
             colors.DARK_RED,
-            900,
+            800,
             50,
             150,
             50,
@@ -47,7 +47,7 @@ class SimScreen:
         self.addWaypoint_button = button.Button(
             colors.BLUE,
             colors.DARK_BLUE,
-            900,
+            800,
             100,
             75,
             50,
@@ -58,7 +58,7 @@ class SimScreen:
         self.removeWaypoint_button = button.Button(
             colors.BLUE,
             colors.DARK_BLUE,
-            975,
+            875,
             100,
             75,
             50,
@@ -69,7 +69,7 @@ class SimScreen:
         self.start_button = button.Button(
             colors.GREEN,
             (0, 150, 0),
-            900,
+            800,
             160,
             75,
             50,
@@ -80,7 +80,7 @@ class SimScreen:
         self.stop_button = button.Button(
             colors.RED,
             colors.DARK_RED,
-            975,
+            875,
             160,
             75,
             50,
@@ -89,12 +89,12 @@ class SimScreen:
         )
 
         self.vJoystick = virtual_joystick.VirtualJoystick(
-            900,
+            800,
             500
         )
 
         self.stanleyJoystick = virtual_joystick.VirtualJoystick(
-            1100,
+            1000,
             500
         )
 
@@ -104,19 +104,19 @@ class SimScreen:
 
         self.steeringDisplay = display_text.Text(
             "",
-            700,
+            600,
             150
         )
         
         self.headingDisplay = display_text.Text(
             "",
-            700,
+            600,
             200
         )
 
         self.cteDisplay = display_text.Text(
             "",
-            700,
+            600,
             250
         )
 
