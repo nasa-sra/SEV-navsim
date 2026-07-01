@@ -65,13 +65,13 @@ def run_ws():
  
 pygame.init()
 
-screen = pygame.display.set_mode((1280, 720))
+screen = pygame.display.set_mode((1180, 780))
 clock = pygame.time.Clock()
 
 sim_screen = SimScreen(screen)
 gui_screen = GuiScreen(screen)
 
-current_screen = sim_screen
+current_screen = gui_screen
 
 
 # Give GuiScreen access to waypoints
@@ -162,7 +162,7 @@ while running:
             current_screen.set_route(latest_route)
             
         pygame_widgets.update(events)
-    screen.blit(nasa_logo, (1125, 25))
+    screen.blit(nasa_logo, (1025, 25))
     left_button.draw(screen)
     right_button.draw(screen)
 
