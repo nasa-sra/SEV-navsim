@@ -12,9 +12,23 @@ class GuiScreen:
         self.slider = Slider(screen, 50, 600, 400, 10, min=-100, max=100, step=1)
         self.output = TextBox(screen, 250, 650, 75, 50, fontSize=20)
         self.output.disable()
+        
+        self.throttle = 0
+        self.twist = 0
+        
+        pygame.joystick.init()
+        
+        self.useJoystick = pygame.joystick.get_count() > 0
+        
+        if self.useJoystick:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+        else:
+            print("No joystick detected. Please connect your Extreme 3D Pro.")
+
 
         self.joystick_image = pygame.image.load("images/logitech.jpg").convert_alpha()
-
+        
         width = self.joystick_image.get_width()
         height = self.joystick_image.get_height()
         scale = 0.25
@@ -31,8 +45,13 @@ class GuiScreen:
         self.coord_font = pygame.font.SysFont(None, 28)
 
     def handle_event(self, event):
-        pass
-
+        if (
+            self.useJoystick
+            and event.type == pygame.JOYAXISMOTION
+        ):
+            self.throttle = self.joystick.get_axis(1)
+            self.twist = self.joystick.get_axis(2)       
+    
     def update(self, dt):
         pass
 
@@ -53,8 +72,9 @@ class GuiScreen:
         self.screen.fill((255, 255, 255))
         self.screen.blit(self.joystick_image, (425, 125))
 
-        mag = self.slider.getValue()
-        angle = math.pi / 2 - abs((mag / 100) * math.pi / 2)
+        twist_mag = self.slider.getValue() if not self.useJoystick else self.twist * 100
+        throttle_mag = self.slider.getValue() if not self.useJoystick else -self.throttle * 100
+        angle = math.pi / 2 - abs((twist_mag / 100) * math.pi / 2)
 
         pygame.draw.arc(self.screen, colors.RED, (515, 40, 300, 300), angle, math.pi - angle, width=3)
 
@@ -67,9 +87,9 @@ class GuiScreen:
                 arc_center[1] - arc_radius * math.sin(theta)
             )
 
-        if mag != 0:
+        if twist_mag != 0:
             eps = 0.05  # small step back along the arc, toward its start
-            if mag > 0:
+            if twist_mag > 0:
                 tip = point_on_arc(angle)
                 trailing = point_on_arc(angle + eps)
             else:
@@ -81,11 +101,11 @@ class GuiScreen:
             self.draw_arrowhead(tip, direction_deg, colors.RED)
 
         throttle_origin = (950, 360)
-        throttle_length = 3 * abs(mag)
-        throttle_dir_deg = 0 if mag >= 0 else 180
+        throttle_length = 3 * abs(throttle_mag)
+        throttle_dir_deg = 0 if throttle_mag >= 0 else 180
         throttle_tip = (
             throttle_origin[0],
-            throttle_origin[1] - throttle_length if mag >= 0 else throttle_origin[1] + throttle_length
+            throttle_origin[1] - throttle_length if throttle_mag >= 0 else throttle_origin[1] + throttle_length
         )
         pygame.draw.line(self.screen, colors.BLUE, throttle_origin, throttle_tip, width=3)
         self.draw_arrowhead(throttle_tip, throttle_dir_deg, colors.BLUE)
