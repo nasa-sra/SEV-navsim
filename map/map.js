@@ -2,13 +2,14 @@ const socket = new WebSocket("ws://localhost:8765");
 
 const map = L.map('map').setView([29.56, -95.08], 17);
 
+//TODO: change the below to run offline map (possibly with tilemaker/pmtiles/etc)
+
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
 }).addTo(map);
 
-// --- CONFIG: swap this when you self-host OSRM/Valhalla ---
-const OSRM_BASE_URL = "https://router.project-osrm.org";
-const OSRM_PROFILE = "foot";
+const OSRM_BASE_URL = "http://127.0.0.1:5000";
+const OSRM_PROFILE = "driving";
 
 let startMarker = null;
 let endMarker = null;
