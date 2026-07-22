@@ -32,7 +32,13 @@ docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend \
 ```
 ## Running the SEV-navsim Map and GUI
 
-#1. Open SEV-navsim in VSCode and start the python range_server on port 8000 (in the map folder)
+#1. Create a new window in VSCode and open the SEV-navsim project
+
+#2. Download the texas-latest.pmtiles file from the Releases tab and move it to the ```map``` folder
+
+[Link to download texas-latest.pmtiles](https://github.com/nasa-sra/SEV-navsim/releases/tag/Texas_PMTiles)
+
+#3. Open a new VSCode terminal and start the python range_server on port 8000 (in the map folder)
 
 Note: This app serves its files over a local HTTP server (range_server.py) rather than opening index.html directly, because the offline map tiles (.pmtiles) are read via HTTP range requests (partial byte-range fetches that only work over http://, not file://). Python's built-in http.server doesn't correctly support range requests, so a small custom server is used instead to ensure the map tiles load correctly.
 
@@ -41,7 +47,7 @@ cd map
 python range_server.py 8000
 ```
 
-#2. Run the main Python file! (SEV-navsim base directory; opens GUI and map in default browser)
+#4. Run the main Python file! (SEV-navsim base directory; opens GUI and map in default browser)
 ```bash
 python main.py
 ```
