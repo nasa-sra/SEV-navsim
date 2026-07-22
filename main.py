@@ -131,8 +131,7 @@ nasa_logo = pygame.transform.smoothscale(
  
 threading.Thread(target=run_ws, daemon=True).start()
 
-map_path = os.path.abspath("map/index.html")
-webbrowser.open("file://" + map_path)
+webbrowser.open("http://localhost:8000")
 
 
 # MAIN LOOP

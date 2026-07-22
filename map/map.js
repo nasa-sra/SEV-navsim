@@ -1,12 +1,122 @@
-const socket = new WebSocket("ws://localhost:8765");
+// Custom style matching tilemaker's default OpenMapTiles schema to integrate w/ protomaps-leaflet layers
+
+const {
+    PolygonSymbolizer,
+    LineSymbolizer,
+    LineLabelSymbolizer,
+    CenteredTextSymbolizer,
+} = protomapsL;
+
+const paintRules = [
+    {
+        dataLayer: "landcover",
+        symbolizer: new PolygonSymbolizer({ fill: "#e8e4d8" }),
+    },
+    {
+        dataLayer: "landuse",
+        symbolizer: new PolygonSymbolizer({ fill: "#e0ddd0", opacity: 0.6 }),
+    },
+    {
+        dataLayer: "park",
+        symbolizer: new PolygonSymbolizer({ fill: "#c8dfb8", opacity: 0.7 }),
+    },
+    {
+        dataLayer: "water",
+        symbolizer: new PolygonSymbolizer({ fill: "#a3ccff" }),
+    },
+    {
+        dataLayer: "waterway",
+        symbolizer: new LineSymbolizer({ color: "#a3ccff", width: 1.2 }),
+    },
+    // (only show once zoomed in reasonably close)
+    {
+        dataLayer: "building",
+        symbolizer: new PolygonSymbolizer({
+            fill: "#d9d0c3",
+            stroke: "#b8ab97",
+            width: 0.5,
+        }),
+        minzoom: 13,
+    },
+    {
+        dataLayer: "transportation",
+        symbolizer: new LineSymbolizer({
+            color: "#fab8b8",
+            width: (z) => (z > 12 ? 5 : 3),
+        }),
+        filter: (z, f) => ["motorway", "trunk"].includes(f.props["class"]),
+    },
+    {
+        dataLayer: "transportation",
+        symbolizer: new LineSymbolizer({
+            color: "#fcd7a0",
+            width: (z) => (z > 12 ? 4 : 2),
+        }),
+        filter: (z, f) => ["primary", "secondary"].includes(f.props["class"]),
+    },
+    {
+        dataLayer: "transportation",
+        symbolizer: new LineSymbolizer({
+            color: "#ffffff",
+            width: (z) => (z > 14 ? 3 : 1),
+            stroke: "#cfcfcf",
+        }),
+        filter: (z, f) =>
+            ["tertiary", "minor", "service"].includes(f.props["class"]),
+        minzoom: 12,
+    },
+    {
+        dataLayer: "transportation",
+        symbolizer: new LineSymbolizer({ color: "#999999", width: 1 }),
+        filter: (z, f) => f.props["class"] === "rail",
+        minzoom: 10,
+    },
+    {
+        dataLayer: "boundary",
+        symbolizer: new LineSymbolizer({
+            color: "#888888",
+            width: 0.8,
+            dash: [4, 2],
+        }),
+    },
+];
+
+const labelRules = [
+    // street names along the road line, only when zoomed in
+    {
+        dataLayer: "transportation_name",
+        symbolizer: new LineLabelSymbolizer({
+            fill: "#333333",
+            font: "12px sans-serif",
+        }),
+        minzoom: 14,
+    },
+    {
+        dataLayer: "place",
+        symbolizer: new CenteredTextSymbolizer({
+            fill: "#222222",
+            stroke: "#ffffff",
+            width: 2,
+            font: (z, f) =>
+                ["city", "town"].includes(f.props["class"])
+                    ? "bold 14px sans-serif"
+                    : "11px sans-serif",
+        }),
+    },
+];
 
 const map = L.map('map').setView([29.56, -95.08], 17);
 
-//TODO: change the below to run offline map (possibly with tilemaker/pmtiles/etc)
+const layer = protomapsL.leafletLayer({
+    url: "texas-latest.pmtiles",
+    paintRules: paintRules,
+    labelRules: labelRules,
+    maxDataZoom: 14,
+});
+layer.addTo(map);
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-}).addTo(map);
+
+const socket = new WebSocket("ws://localhost:8765");
 
 const OSRM_BASE_URL = "http://127.0.0.1:5000";
 const OSRM_PROFILE = "driving";
@@ -61,7 +171,6 @@ async function drawRoute() {
         routeLine = L.polyline(latlngs, { color: "blue", weight: 4 }).addTo(map);
         map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
 
-        // Pull OSRM's own turn-by-turn steps out of the first (only) leg
         const steps = route.legs[0].steps.map(step => ({
             instruction: step.maneuver.type,
             modifier: step.maneuver.modifier,
@@ -86,18 +195,15 @@ async function drawRoute() {
 map.on('click', function (e) {
 
     if (!startMarker) {
-        // first click: set start
         startMarker = L.marker(e.latlng, { title: "Start" }).addTo(map);
         sendWaypoint("start", e.latlng);
 
     } else if (!endMarker) {
-        // second click: set end, then route
         endMarker = L.marker(e.latlng, { title: "End" }).addTo(map);
         sendWaypoint("end", e.latlng);
         drawRoute();
 
     } else {
-        // third click: reset everything and start over
         map.removeLayer(startMarker);
         map.removeLayer(endMarker);
         clearRoute();
