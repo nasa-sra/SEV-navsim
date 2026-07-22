@@ -14,7 +14,8 @@ import os
 from sim_screen import SimScreen
 from gui_screen import GuiScreen
  
-ws_server = None
+map_server = None
+ros_server = None
 
 clients = set()
 
@@ -22,7 +23,10 @@ start_waypoint = None
 end_waypoint = None
 latest_route = None
 
-async def handler(websocket):
+gps_latitude = None
+gps_longitude = None
+
+async def map_handler(websocket):
     global start_waypoint, end_waypoint, latest_route
 
     async for message in websocket:
@@ -40,25 +44,73 @@ async def handler(websocket):
             }
             print(f"Route received: {latest_route['distance_m']:.0f} m, "
                   f"{latest_route['duration_s']:.0f} s")
+            
+async def ros_handler(websocket):
+    global gps_latitude, gps_longitude
+    
+    print("ROS client connected")
+
+    try:
+        async for message in websocket:
+            data = json.loads(message)
+
+            gps_latitude = data["vectornav_gnss"]["latitude"]
+            gps_longitude = data["vectornav_gnss"]["longitude"]
+            
+            print("Long: ", gps_longitude)
+            print("Lat", gps_latitude)
 
 
-async def start_server():
-    server = await websockets.serve(handler, "localhost", 8765)
+    except websockets.ConnectionClosed:
+        print("ROS client disconnected")
+
+
+async def start_mapdata_server():
+    global map_server
+    
+    map_server = await websockets.serve(map_handler, "localhost", 8765)
     print("WebSocket running on ws://localhost:8765")
 
-    await server.wait_closed()
+    await map_server.wait_closed()
     
     
-def stop_server():
-    global ws_server
+async def start_rosdata_server():
+    global ros_server
+    
+    ros_server = await websockets.serve(ros_handler, "0.0.0.0", 9002)
+    print("ROS server listening on port 9002")
 
-    if ws_server:
-        ws_server.close()
-        print("WebSocket server closing...")
+    await ros_server.wait_closed()
+    
+    
+async def start_servers():
+    await asyncio.gather(
+        start_mapdata_server(), 
+        start_rosdata_server()
+    )
+    
+def stop_map_server():
+    global map_server
+    
+    if map_server:
+        map_server.close()
+        print("MapData WebSocket server closing...") 
+        
+def stop_ros_server():
+    global ros_server
+    
+    if ros_server:
+        ros_server.close()
+        print("RosData WebSocket server closing...") 
+        
+def stop_servers():
+    stop_map_server()
+    stop_ros_server()       
 
 
 def run_ws():
-    asyncio.run(start_server())
+    # asyncio.run(start_mapdata_server())
+    asyncio.run(start_servers())
 
 
 # PYGAME INIT
@@ -99,7 +151,7 @@ left_button = button.Button(
     50,
     40,
     "<",
-    show_sim
+    show_gui
 )
 
 right_button = button.Button(
@@ -110,7 +162,7 @@ right_button = button.Button(
     50,
     40,
     ">",
-    show_gui
+    show_sim
 )
 
 
@@ -155,6 +207,8 @@ while running:
     current_screen.update(dt)
     current_screen.draw()
     if isinstance(current_screen, GuiScreen):
+        current_screen.set_geoposition(gps_latitude, gps_longitude)
+        current_screen.draw_geoposition()
         current_screen.setText()
         if start_waypoint and end_waypoint:
             current_screen.set_waypoints(start_waypoint, end_waypoint)
@@ -167,5 +221,5 @@ while running:
 
     pygame.display.flip()
 
-stop_server()
+stop_servers()
 pygame.quit()

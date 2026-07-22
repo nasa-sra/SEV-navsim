@@ -43,6 +43,9 @@ class GuiScreen:
         self.route = None
         self.steps = None
         self.coord_font = pygame.font.SysFont(None, 28)
+        
+        self.gps_latitude = 0
+        self.gps_longitude = 0
 
     def handle_event(self, event):
         if (
@@ -66,6 +69,19 @@ class GuiScreen:
         if route:
             self.route = route.get('geometry')
             self.steps = route.get('steps')
+            
+    def set_geoposition(self, gps_lat, gps_long):
+        self.gps_latitude = gps_lat
+        self.gps_longitude = gps_long
+        
+    def draw_geoposition(self):
+        if self.gps_latitude is None or self.gps_longitude is None:
+            text = "Vnav Coords -> Waiting for GPS..."
+        else:
+            text = f"Vnav Coords ->: Lat {self.gps_latitude:.6f}   Lon: {self.gps_longitude:.6f}"
+
+        surface = self.coord_font.render(text, True, (0, 0, 0))
+        self.screen.blit(surface, (50, 230))
 
     def draw(self):
 
